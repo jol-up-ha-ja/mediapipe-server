@@ -55,7 +55,7 @@ jobs:
           port: ${{ secrets.EC2_SSH_PORT }}
           timeout: 60s
           script: |
-            cd joluphaja
+            cd mediapipe
 
             sudo touch .env
             sudo echo "${{ secrets.ENV_VARS }}" | sudo tee .env > /dev/null
@@ -65,7 +65,7 @@ jobs:
             sudo docker rm $(sudo docker ps -a -q)
             sudo docker rmi $(sudo docker images -q)
             sudo docker pull sanghoonjeong/mania-mediapipe-server:${{env.IMAGE_TAG}}
-            sudo docker-compose -f ~/joluphaja/docker-compose.yml --env-file ~/joluphaja/.env up --build -d
+            sudo docker run --restart unless-stopped -d --add-host=host.docker.internal:host-gateway --name server --hostname server --env-file ~/mediapipe/.env -e TZ=Asia/Seoul --expose 6000 --log-driver=awslogs --log-opt awslogs-group=mania --log-opt awslogs-region=ap-northeast-2 --log-opt awslogs-stream=server sanghoonjeong/mania-mediapipe-server:${{env.IMAGE_TAG}}
 
             sudo docker system prune --all -f
 
