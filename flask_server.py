@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 
+from analysis_service import *
+
 app = Flask(__name__)
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
@@ -14,22 +16,25 @@ def index():
 
 @app.route('/mediapipe/img', methods=['POST'])
 @cross_origin('*')
-def predict():
+def analyze_image():
     try:
-        front_image_url = request.form.get('frontImgUrl')
-        side_image_url = request.form.get('sideImgUrl')
+        params = request.get_json()
+        front_image_key = params['frontImgKey']
+        side_image_key = params['sideImgKey']
 
-        print(front_image_url, side_image_url)
+        front_analysis = analysis_front_image(front_image_key)
+        side_analysis = analysis_side_image(side_image_key)
+
         return jsonify({
-            'frontShoulderAngle': 100,
-            'frontPelvisAngle': 200,
-            'frontKneeAngle': 300,
-            'frontAnkleAngle': 400,
-            'sideNeckAngle': 500,
-            'sideBodyAngle': 600,
-        }), 200
+            'frontShoulderAngle': front_analysis[0],
+            'frontPelvisAngle': front_analysis[1],
+            'frontKneeAngle': front_analysis[2],
+            'frontAnkleAngle': front_analysis[3],
+            'sideBodyAngle': side_analysis[0],
+            'sideLegAngle': side_analysis[1],
+        }), 201
     except Exception as e:
-        print(e)
+        e.with_traceback()
         return jsonify({'error': 'Error occurred during prediction'}), 500
 
 
