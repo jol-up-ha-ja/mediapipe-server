@@ -20,20 +20,20 @@ jobs:
       - name: Check Out The Repository
         uses: actions/checkout@v3
 
-      - name: Make image tag
-        run: echo "IMAGE_TAG=$ACTIVE_PROFILE-${GITHUB_SHA::7}" >> $GITHUB_ENV # activeProfile-커밋 hash 값
+#      - name: Make image tag
+#        run: echo "IMAGE_TAG=$ACTIVE_PROFILE-${GITHUB_SHA::7}" >> $GITHUB_ENV # activeProfile-커밋 hash 값
+#
+#      - name: Docker build and push
+#        run: |
+#          docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_PASSWORD
+#          docker build -t sanghoonjeong/mania-mediapipe-server:${{env.IMAGE_TAG}} .
+#          docker push sanghoonjeong/mania-mediapipe-server:${{env.IMAGE_TAG}}
 
-      - name: Docker build and push
-        run: |
-          docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_PASSWORD
-          docker build -t sanghoonjeong/mania-mediapipe-server:${{env.IMAGE_TAG}} .
-          docker push sanghoonjeong/mania-mediapipe-server:${{env.IMAGE_TAG}}
-
-      - name: Get Public IP
-        id: publicip
-        run: |
-          response=$(curl -s canhazip.com)
-          echo "ip='$response'" >> $GITHUB_OUTPUT
+#      - name: Get Public IP
+#        id: publicip
+#        run: |
+#          response=$(curl -s canhazip.com)
+#          echo "ip='$response'" >> $GITHUB_OUTPUT
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -45,6 +45,15 @@ jobs:
       - name: Add GitHub IP to AWS
         run: |
           aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_SG_ID }} --protocol tcp --port ${{ secrets.EC2_SSH_PORT }} --cidr ${{ steps.publicip.outputs.ip  }}/32
+
+      - name: copy source via ssh key
+        uses: burnett01/rsync-deployments@4.1
+        with:
+          switches: -avzr --delete
+          remote_path: ~/srv/ubuntu/mania
+          remote_host: ${{ secrets.EC2_HOST }}
+          remote_user: ubuntu
+          remote_key: ${{ secrets.EC2_KEY }}
 
       - name: Deploy
         uses: appleboy/ssh-action@master
@@ -59,15 +68,23 @@ jobs:
 
             sudo touch .env
             sudo echo "${{ secrets.ENV_VARS }}" | sudo tee .env > /dev/null
-            sudo echo "IMAGE_TAG=${{ env.IMAGE_TAG }}" >> .env
             
-            sudo docker stop $(sudo docker ps -a -q)
-            sudo docker rm $(sudo docker ps -a -q)
-            sudo docker rmi $(sudo docker images -q)
-            sudo docker pull sanghoonjeong/mania-mediapipe-server:${{env.IMAGE_TAG}}
-            sudo docker run --restart unless-stopped -d --add-host=host.docker.internal:host-gateway --name mediapipe-server --hostname mediapipe-server --env-file ~/mania/.env -e TZ=Asia/Seoul -p 6000:6000 --log-driver=awslogs --log-opt awslogs-group=mania --log-opt awslogs-region=ap-northeast-2 --log-opt awslogs-stream=server sanghoonjeong/mania-mediapipe-server:${{env.IMAGE_TAG}}
+            sudo python3 -m pip install --upgrade pip
+            sudo pip3 install --use-pep517 -r requirements.txt
+            sudo apt-get update
+            sudo apt-get -y install libgl1-mesa-glx
+            sudo python3 -m flask_server run --host=0.0.0.0 --port=6000
+                    
 
-            sudo docker system prune --all -f
+#            sudo echo "IMAGE_TAG=${{ env.IMAGE_TAG }}" >> .env
+#
+#            sudo docker stop $(sudo docker ps -a -q)
+#            sudo docker rm $(sudo docker ps -a -q)
+#            sudo docker rmi $(sudo docker images -q)
+#            sudo docker pull sanghoonjeong/mania-mediapipe-server:${{env.IMAGE_TAG}}
+#            sudo docker run --restart unless-stopped -d --add-host=host.docker.internal:host-gateway --name mediapipe-server --hostname mediapipe-server --env-file ~/mania/.env -e TZ=Asia/Seoul -p 6000:6000 --log-driver=awslogs --log-opt awslogs-group=mania --log-opt awslogs-region=ap-northeast-2 --log-opt awslogs-stream=server sanghoonjeong/mania-mediapipe-server:${{env.IMAGE_TAG}}
+#
+#            sudo docker system prune --all -f
 
             rm -rf .env
 
