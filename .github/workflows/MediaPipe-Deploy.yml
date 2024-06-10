@@ -20,17 +20,6 @@ jobs:
       - name: Check Out The Repository
         uses: actions/checkout@v3
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-
-      - name: Add GitHub IP to AWS
-        run: |
-          aws ec2 authorize-security-group-ingress --group-id ${{ secrets.AWS_SG_ID }} --protocol tcp --port ${{ secrets.EC2_SSH_PORT }} --cidr ${{ steps.publicip.outputs.ip  }}/32
-
       - name: copy source via ssh key
         uses: burnett01/rsync-deployments@4.1
         with:
@@ -61,7 +50,3 @@ jobs:
             sudo python3 -m flask_server run --host=0.0.0.0 --port=6000
 
             rm -rf .env
-
-      - name: Remove IP FROM security group
-        run: |
-          aws ec2 revoke-security-group-ingress --group-id ${{ secrets.AWS_SG_ID }} --protocol tcp --port ${{ secrets.EC2_SSH_PORT }} --cidr ${{ steps.publicip.outputs.ip  }}/32
