@@ -44,9 +44,9 @@ jobs:
             sudo echo "${{ secrets.ENV_VARS }}" | sudo tee .env > /dev/null
             
             sudo python3 -m pip install --upgrade pip
-            sudo pip3 install --use-pep517 -r requirements.txt
             sudo apt-get update
             sudo apt-get -y install libgl1-mesa-glx
+            sudo pip3 install --use-pep517 -r requirements.txt
             sudo python3 -m flask_server run --host=0.0.0.0 --port=6000
 
             rm -rf .env
