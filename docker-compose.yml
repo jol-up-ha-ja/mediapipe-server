@@ -1,0 +1,13 @@
+version: '3.7'
+
+services:
+  api-server:
+    image: sanghoonjeong/mania-mediapipe-server:${IMAGE_TAG}
+    env_file:
+      - .env
+    environment:
+      - TZ=Asia/Seoul
+    ports:
+      - "6000:6000"
+    volumes:
+      - ./docker:/mania
