@@ -33,8 +33,8 @@ def analyze_image():
             'frontPelvisAngle': front_analysis[1],
             'frontKneeAngle': front_analysis[2],
             'frontAnkleAngle': front_analysis[3],
-            'sideBodyAngle': side_analysis[0],
-            'sideLegAngle': side_analysis[1],
+            'sideNeckAngle': side_analysis[0],
+            'sideBodyAngle': side_analysis[1],
         }), 201
     except Exception as e:
         e.with_traceback()
