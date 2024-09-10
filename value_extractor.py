@@ -31,7 +31,8 @@ def calculate_angle_to_horizon(point1, point2):
     p2 = np.array(point2)
 
     vector = p2 - p1
-    horizon_vector = np.array([vector[0], vector[1], 0])
+    horizon_vector = np.array([vector[0], 0, vector[2]])
+    # print(p1, p2, calculate_angle(vector, horizon_vector))
 
     return calculate_angle(vector, horizon_vector)
 
@@ -52,6 +53,11 @@ def calculate_front_angle(langmarks):
     # 어깨, 골반, 무릎, 발목 순
     indices = [(11, 12), (23, 24), (25, 26), (27, 28)]
     extracted_data = []
+
+    # print(len(langmarks))
+    #
+    # for idx, langmark in enumerate(langmarks):
+    #     print(idx, langmark)
 
     for r, l in indices:
         r_part = langmarks[r]
